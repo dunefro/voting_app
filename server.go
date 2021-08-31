@@ -82,4 +82,5 @@ func votingStatus(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, sb.String())
 }
 func votingResult(w http.ResponseWriter, r *http.Request) {
+
 }
