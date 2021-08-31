@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type candidate struct {
@@ -35,10 +36,23 @@ func listCandidate(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, ListOfCandidates)
 }
 func addCandidate(w http.ResponseWriter, r *http.Request) {
-	// name := strings.Trim(r.URL.Path, "/candidate/add/")
+	log.Println(r.URL.Path)
+	name := strings.TrimLeft(r.URL.Path, "/candidate/add/")
+	log.Println(name)
+	for _, val := range candidates {
+		if val.name == name {
+			w.WriteHeader(http.StatusForbidden)
+			fmt.Fprintf(w, "Candidate already exists")
+			return
+		}
+	}
+	candidates = append(candidates, candidate{name, 0})
+	w.WriteHeader(http.StatusAccepted)
+	fmt.Fprintf(w, fmt.Sprintf("Candidate %q added", name))
 }
 func deleteCandidate(w http.ResponseWriter, r *http.Request) {
-	// name := strings.Trim(r.URL.Path, "/candidate/delete/")
+	name := strings.TrimLeft(r.URL.Path, "/candidate/delete/")
+	fmt.Fprintf(w, fmt.Sprintf("%q", name))
 }
 func voteCandidate(w http.ResponseWriter, r *http.Request) {
 	// name := strings.Trim(r.URL.Path, "/candidate/vote/")
