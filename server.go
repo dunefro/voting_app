@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -12,7 +13,7 @@ type candidate struct {
 	votes int
 }
 
-var candidates []candidate
+var candidates []*candidate
 
 func main() {
 	// http.HandleFunc("/", root)
@@ -32,13 +33,15 @@ func healthz(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Up and running !")
 }
 func listCandidate(w http.ResponseWriter, r *http.Request) {
-	ListOfCandidates := fmt.Sprintf("List of candidates -\n%+v", candidates)
-	fmt.Fprintf(w, ListOfCandidates)
+	var sb strings.Builder
+	for _, candidate := range candidates {
+		sb.WriteString(candidate.name)
+	}
+	// ListOfCandidates := fmt.Sprintf("List of candidates -\n%+v", candidates)
+	fmt.Fprintf(w, sb.String())
 }
 func addCandidate(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL.Path)
-	name := strings.TrimLeft(r.URL.Path, "/candidate/add/")
-	log.Println(name)
+	name := strings.TrimPrefix(r.URL.Path, "/candidate/add/")
 	for _, val := range candidates {
 		if val.name == name {
 			w.WriteHeader(http.StatusForbidden)
@@ -46,18 +49,37 @@ func addCandidate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	candidates = append(candidates, candidate{name, 0})
+	candidates = append(candidates, &candidate{name, 0})
 	w.WriteHeader(http.StatusAccepted)
 	fmt.Fprintf(w, fmt.Sprintf("Candidate %q added", name))
 }
 func deleteCandidate(w http.ResponseWriter, r *http.Request) {
-	name := strings.TrimLeft(r.URL.Path, "/candidate/delete/")
+	name := strings.TrimPrefix(r.URL.Path, "/candidate/delete/")
 	fmt.Fprintf(w, fmt.Sprintf("%q", name))
 }
 func voteCandidate(w http.ResponseWriter, r *http.Request) {
-	// name := strings.Trim(r.URL.Path, "/candidate/vote/")
+	log.Println(r.URL.Path)
+	name := strings.TrimPrefix(r.URL.Path, "/candidate/vote/")
+	log.Println(name)
+	for _, val := range candidates {
+		if val.name == name {
+			val.votes += 1
+			// log.Println(val)
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprintf(w, fmt.Sprintf("You voted for %q", name))
+			return
+		}
+	}
+	w.WriteHeader(http.StatusNotFound)
+	fmt.Fprintf(w, fmt.Sprintf("%q is not a valid candidate", name))
 }
 func votingStatus(w http.ResponseWriter, r *http.Request) {
+	var sb strings.Builder
+	for _, candidate := range candidates {
+		sb.WriteString(candidate.name + " ")
+		sb.WriteString(strconv.Itoa(candidate.votes) + "\n")
+	}
+	fmt.Fprintf(w, sb.String())
 }
 func votingResult(w http.ResponseWriter, r *http.Request) {
 }
