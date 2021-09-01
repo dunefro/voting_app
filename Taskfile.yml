@@ -1,0 +1,22 @@
+version: '3'
+
+vars:
+  PORT: 7070
+  IMAGE_TAG: voting-app:v1
+
+tasks:
+  build:
+    desc: "To build the docker image"
+    cmds:
+      - DOCKER_BUILDKIT=1 docker image build -t {{.IMAGE_TAG}} .
+  
+  deploy: 
+    desc: "To deploy the docker image"
+    cmds:
+      - docker container run -p {{.PORT}}:8080 -d {{.IMAGE_TAG}}
+
+  test:
+    desc: "Test the deployed application"
+    cmds:
+      - curl localhost:7070/healthz; echo
+      

@@ -37,7 +37,6 @@ func listCandidate(w http.ResponseWriter, r *http.Request) {
 	for _, candidate := range candidates {
 		sb.WriteString(candidate.name)
 	}
-	// ListOfCandidates := fmt.Sprintf("List of candidates -\n%+v", candidates)
 	fmt.Fprintf(w, sb.String())
 }
 func addCandidate(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +63,6 @@ func voteCandidate(w http.ResponseWriter, r *http.Request) {
 	for _, val := range candidates {
 		if val.name == name {
 			val.votes += 1
-			// log.Println(val)
 			w.WriteHeader(http.StatusAccepted)
 			fmt.Fprintf(w, fmt.Sprintf("You voted for %q", name))
 			return
@@ -82,5 +80,29 @@ func votingStatus(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, sb.String())
 }
 func votingResult(w http.ResponseWriter, r *http.Request) {
-
+	var max int
+	var winner string
+	var check bool
+	for _, candidate := range candidates {
+		if candidate.votes > max {
+			winner = candidate.name
+			max = candidate.votes
+		} else if candidate.votes == max && max != 0 {
+			check = true
+			winner = winner + " " + candidate.name
+		}
+	}
+	if winner == "" {
+		w.WriteHeader(http.StatusExpectationFailed)
+		fmt.Fprintf(w, fmt.Sprintf("No votes are casted. No candidate is declared as winner"))
+	} else {
+		if check {
+			w.WriteHeader(http.StatusConflict)
+			winner = strings.Join(strings.Split(winner, " "), ",")
+			fmt.Fprintf(w, fmt.Sprintf("Draw between %q with %d votes", winner, max))
+		} else {
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintf(w, fmt.Sprintf("The winner of the elections is %q with %d votes", winner, max))
+		}
+	}
 }
